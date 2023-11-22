@@ -73,11 +73,6 @@
           canvas_input.height
         );
         var result = false;
-        if (!matcher) {
-          let templateSrcElement = document.getElementById("templateSrc");
-          matcher = new Matcher("front", templateSrcElement);
-        }
-        result = matcher.match(canvas_input);
 
         // Draw the current frame from the video onto the canvas
         canvas_context.drawImage(video, 0, 0, canvas.width, canvas.height);
