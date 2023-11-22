@@ -1,1 +1,120 @@
-<h1> hello </h1>
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Hello OpenCV.js</title>
+    <script src="https://cdn.jsdelivr.net/gh/nicolaspanel/numjs@0.15.1/dist/numjs.min.js"></script>
+
+    <style>
+      .inputoutput {
+        float: left;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div>
+      <img id="templateSrc" alt="No templateImage" src="front2.png" />
+      <br />
+      <video
+        id="webcam"
+        width="0"
+        height="0"
+        autoplay
+        style="display: none"
+      ></video>
+      <canvas id="canvasPreview" width="640" height="480"></canvas>
+      <br />
+      <canvas id="canvasInput" width="320" height="200" hidden="true"></canvas>
+      <br />
+      <canvas id="canvasOutput" width="320" height="200"></canvas>
+
+      <br />
+    </div>
+    <script
+      async
+      src="opencv.js"
+      onload="onOpenCVLoaded();"
+      type="text/javascript"
+    ></script>
+    <script src="match.js" type="text/javascript"></script>
+
+    <script type="text/javascript">
+      // Access the webcam
+      navigator.mediaDevices
+        .getUserMedia({ video: { width: 640, height: 480 }, audio: false })
+        .then(function (stream) {
+          document.getElementById("webcam").style.display = "block";
+          document.getElementById("webcam").srcObject = stream;
+        })
+        .catch(function (err) {
+          console.log("An error occurred: " + err);
+        });
+
+      let matcher = null;
+
+      // Function to process the webcam feed
+      function processWebcamFeed() {
+        let video = document.getElementById("webcam");
+        let canvas = document.getElementById("canvasPreview");
+        let canvas_context = canvas.getContext("2d");
+
+        let canvas_input = document.getElementById("canvasInput");
+        let canvas_input_context = canvas_input.getContext("2d");
+        canvas_input_context.drawImage(
+          video,
+          160,
+          140,
+          320,
+          200,
+          0,
+          0,
+          canvas_input.width,
+          canvas_input.height
+        );
+        var result = false;
+        if (!matcher) {
+          let templateSrcElement = document.getElementById("templateSrc");
+          matcher = new Matcher("front", templateSrcElement);
+        }
+        result = matcher.match(canvas_input);
+
+        // Draw the current frame from the video onto the canvas
+        canvas_context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        // Draw a rectangle on the canvas
+        var style = "red";
+        if (result) style = "green";
+        drawRectangle(canvas_context, style);
+
+        // Continue the loop
+        requestAnimationFrame(processWebcamFeed);
+      }
+
+      // Function to draw a rectangle
+      function drawRectangle(context, style) {
+        // Set the style for the rectangle
+        context.strokeStyle = style;
+        context.lineWidth = 2;
+
+        // Define the rectangle dimensions and position
+        const rectX = 170;
+        const rectY = 150;
+        const rectWidth = 300;
+        const rectHeight = 180;
+
+        // Draw the rectangle
+        context.strokeRect(rectX, rectY, rectWidth, rectHeight);
+      }
+
+      function onOpenCVLoaded() {
+        //wait for 1 second before starting the process
+        cv["onRuntimeInitialized"] = function () {
+          console.log("OpenCV.js is Ready");
+          processWebcamFeed();
+        };
+      }
+    </script>
+
+    <!-- 异步加载，不对程序进行阻塞 -->
+  </body>
+</html>
